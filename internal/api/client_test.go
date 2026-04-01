@@ -559,3 +559,56 @@ func TestGetIPPoolStats_Error(t *testing.T) {
 		t.Fatal("expected error, got nil")
 	}
 }
+
+// --- DeployVM ---
+
+func TestDeployVM_Success(t *testing.T) {
+	want := VM{ID: "deploy-1", Name: "my-app", Status: "building", VCPUs: 2, MemoryMB: 1024}
+	var gotBody DeployVMRequest
+	srv := newTestServerFunc(t, func(w http.ResponseWriter, r *http.Request) {
+		json.NewDecoder(r.Body).Decode(&gotBody)
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode(want)
+	})
+	defer srv.Close()
+
+	req := DeployVMRequest{Name: "my-app", RepoURL: "https://github.com/example/app", VCPUCount: 2, MemoryMB: 1024}
+	c := NewClient(srv.URL, "tok")
+	got, err := c.DeployVM(req)
+	if err != nil {
+		t.Fatalf("DeployVM() error: %v", err)
+	}
+	if got.ID != want.ID || got.Status != "building" {
+		t.Errorf("unexpected VM: %+v", got)
+	}
+	if gotBody.Name != "my-app" || gotBody.RepoURL != "https://github.com/example/app" {
+		t.Errorf("unexpected request body: %+v", gotBody)
+	}
+}
+
+func TestDeployVM_UsesCorrectPath(t *testing.T) {
+	var gotPath string
+	srv := newTestServerFunc(t, func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		json.NewEncoder(w).Encode(VM{})
+	})
+	defer srv.Close()
+
+	c := NewClient(srv.URL, "tok")
+	c.DeployVM(DeployVMRequest{Name: "app", RepoURL: "https://github.com/x/y"}) //nolint:errcheck
+
+	if gotPath != "/api/v1/vms/build" {
+		t.Errorf("path: got %q, want /api/v1/vms/build", gotPath)
+	}
+}
+
+func TestDeployVM_Error(t *testing.T) {
+	srv := newTestServer(t, http.StatusUnprocessableEntity, map[string]any{"error": "invalid repo"})
+	defer srv.Close()
+
+	c := NewClient(srv.URL, "tok")
+	_, err := c.DeployVM(DeployVMRequest{Name: "bad", RepoURL: "not-a-url"})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
