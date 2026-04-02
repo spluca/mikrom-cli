@@ -58,7 +58,7 @@ func TestPrintVM(t *testing.T) {
 		Name:        "my-vm",
 		Description: "test machine",
 		Status:      "running",
-		VCPUs:       2,
+		VCPUCount:       2,
 		MemoryMB:    512,
 		IPAddress:   "10.0.0.1",
 	}
@@ -96,7 +96,7 @@ func TestPrintIPPool(t *testing.T) {
 // --- vm list ---
 
 func TestVMListCmd_NoVMs(t *testing.T) {
-	srv := jsonServer(t, http.StatusOK, api.ListVMsResponse{VMs: []api.VM{}, Total: 0})
+	srv := jsonServer(t, http.StatusOK, api.ListVMsResponse{Items: []api.VM{}, Total: 0})
 	defer srv.Close()
 	setupCfg(srv.URL, "test-token")
 
@@ -112,7 +112,7 @@ func TestVMListCmd_NoVMs(t *testing.T) {
 
 func TestVMListCmd_WithVMs(t *testing.T) {
 	body := api.ListVMsResponse{
-		VMs:   []api.VM{{ID: "vm-1", Name: "alpha", Status: "running", VCPUs: 1, MemoryMB: 256}},
+		Items:   []api.VM{{ID: "vm-1", Name: "alpha", Status: "running", VCPUCount: 1, MemoryMB: 256}},
 		Total: 1,
 	}
 	srv := jsonServer(t, http.StatusOK, body)
@@ -146,7 +146,7 @@ func TestVMListCmd_APIError(t *testing.T) {
 // --- vm get ---
 
 func TestVMGetCmd_Success(t *testing.T) {
-	vm := api.VM{ID: "vm-abc", Name: "test", Status: "stopped", VCPUs: 2, MemoryMB: 512}
+	vm := api.VM{ID: "vm-abc", Name: "test", Status: "stopped", VCPUCount: 2, MemoryMB: 512}
 	srv := jsonServer(t, http.StatusOK, vm)
 	defer srv.Close()
 	setupCfg(srv.URL, "test-token")
@@ -526,7 +526,7 @@ func TestAuthProfileCmd_Success(t *testing.T) {
 // --- vm deploy ---
 
 func TestVMDeployCmd_Success(t *testing.T) {
-	vm := api.VM{ID: "deploy-1", Name: "my-app", Status: "building", VCPUs: 2, MemoryMB: 1024}
+	vm := api.VM{ID: "deploy-1", Name: "my-app", Status: "building", VCPUCount: 2, MemoryMB: 1024}
 	srv := jsonServer(t, http.StatusAccepted, vm)
 	defer srv.Close()
 	setupCfg(srv.URL, "test-token")

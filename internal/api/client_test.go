@@ -242,7 +242,7 @@ func TestProfile_Error(t *testing.T) {
 
 func TestListVMs_Success(t *testing.T) {
 	want := ListVMsResponse{
-		VMs:      []VM{{ID: "vm1", Name: "test-vm", Status: "running"}},
+		Items:      []VM{{ID: "vm1", Name: "test-vm", Status: "running"}},
 		Total:    1,
 		Page:     1,
 		PageSize: 10,
@@ -259,8 +259,8 @@ func TestListVMs_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ListVMs() error: %v", err)
 	}
-	if len(got.VMs) != 1 || got.VMs[0].ID != "vm1" {
-		t.Errorf("unexpected VMs: %+v", got.VMs)
+	if len(got.Items) != 1 || got.Items[0].ID != "vm1" {
+		t.Errorf("unexpected Items: %+v", got.Items)
 	}
 	if gotURL != "/api/v1/vms?page=1&page_size=10" {
 		t.Errorf("unexpected URL: %q", gotURL)
@@ -279,7 +279,7 @@ func TestListVMs_Error(t *testing.T) {
 }
 
 func TestGetVM_Success(t *testing.T) {
-	want := VM{ID: "vm-abc", Name: "my-vm", Status: "stopped", VCPUs: 2, MemoryMB: 512}
+	want := VM{ID: "vm-abc", Name: "my-vm", Status: "stopped", VCPUCount: 2, MemoryMB: 512}
 	srv := newTestServer(t, http.StatusOK, want)
 	defer srv.Close()
 
@@ -288,7 +288,7 @@ func TestGetVM_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetVM() error: %v", err)
 	}
-	if got.ID != want.ID || got.VCPUs != 2 {
+	if got.ID != want.ID || got.VCPUCount != 2 {
 		t.Errorf("unexpected VM: %+v", got)
 	}
 }
@@ -305,7 +305,7 @@ func TestGetVM_NotFound(t *testing.T) {
 }
 
 func TestCreateVM_Success(t *testing.T) {
-	want := VM{ID: "new-vm", Name: "fresh", Status: "pending", VCPUs: 1, MemoryMB: 256}
+	want := VM{ID: "new-vm", Name: "fresh", Status: "pending", VCPUCount: 1, MemoryMB: 256}
 	var gotBody CreateVMRequest
 	srv := newTestServerFunc(t, func(w http.ResponseWriter, r *http.Request) {
 		json.NewDecoder(r.Body).Decode(&gotBody)
@@ -314,7 +314,7 @@ func TestCreateVM_Success(t *testing.T) {
 	})
 	defer srv.Close()
 
-	req := CreateVMRequest{Name: "fresh", VCPUs: 1, MemoryMB: 256}
+	req := CreateVMRequest{Name: "fresh", VCPUCount: 1, MemoryMB: 256}
 	c := NewClient(srv.URL, "tok")
 	got, err := c.CreateVM(req)
 	if err != nil {
@@ -323,7 +323,7 @@ func TestCreateVM_Success(t *testing.T) {
 	if got.ID != want.ID {
 		t.Errorf("ID: got %q, want %q", got.ID, want.ID)
 	}
-	if gotBody.Name != "fresh" || gotBody.VCPUs != 1 {
+	if gotBody.Name != "fresh" || gotBody.VCPUCount != 1 {
 		t.Errorf("unexpected request body: %+v", gotBody)
 	}
 }
@@ -563,7 +563,7 @@ func TestGetIPPoolStats_Error(t *testing.T) {
 // --- DeployVM ---
 
 func TestDeployVM_Success(t *testing.T) {
-	want := VM{ID: "deploy-1", Name: "my-app", Status: "building", VCPUs: 2, MemoryMB: 1024}
+	want := VM{ID: "deploy-1", Name: "my-app", Status: "building", VCPUCount: 2, MemoryMB: 1024}
 	var gotBody DeployVMRequest
 	srv := newTestServerFunc(t, func(w http.ResponseWriter, r *http.Request) {
 		json.NewDecoder(r.Body).Decode(&gotBody)

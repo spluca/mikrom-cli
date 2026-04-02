@@ -25,15 +25,15 @@ var vmListCmd = &cobra.Command{
 			return err
 		}
 
-		if len(resp.VMs) == 0 {
+		if len(resp.Items) == 0 {
 			fmt.Println("No VMs found")
 			return nil
 		}
 
 		fmt.Printf("%-36s  %-20s  %-12s  %-4s  %-8s  %s\n", "ID", "NAME", "STATUS", "CPU", "MEM(MB)", "IP")
-		for _, vm := range resp.VMs {
+		for _, vm := range resp.Items {
 			fmt.Printf("%-36s  %-20s  %-12s  %-4d  %-8d  %s\n",
-				vm.ID, vm.Name, vm.Status, vm.VCPUs, vm.MemoryMB, vm.IPAddress)
+				vm.ID, vm.Name, vm.Status, vm.VCPUCount, vm.MemoryMB, vm.IPAddress)
 		}
 		fmt.Printf("\nTotal: %d\n", resp.Total)
 		return nil
@@ -70,7 +70,7 @@ var vmCreateCmd = &cobra.Command{
 		vm, err := newClient().CreateVM(api.CreateVMRequest{
 			Name:        name,
 			Description: desc,
-			VCPUs:       vcpus,
+			VCPUCount:   vcpus,
 			MemoryMB:    memory,
 		})
 		if err != nil {
@@ -190,7 +190,7 @@ func printVM(vm *api.VM) {
 	fmt.Printf("Name:        %s\n", vm.Name)
 	fmt.Printf("Description: %s\n", vm.Description)
 	fmt.Printf("Status:      %s\n", vm.Status)
-	fmt.Printf("vCPUs:       %d\n", vm.VCPUs)
+	fmt.Printf("vCPUs:       %d\n", vm.VCPUCount)
 	fmt.Printf("Memory:      %d MB\n", vm.MemoryMB)
 	fmt.Printf("IP Address:  %s\n", vm.IPAddress)
 }

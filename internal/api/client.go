@@ -122,11 +122,11 @@ func (c *Client) Profile() (*User, error) {
 // VMs
 
 type VM struct {
-	ID          string `json:"id"`
+	ID          string `json:"vm_id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Status      string `json:"status"`
-	VCPUs       int    `json:"vcpus"`
+	VCPUCount   int    `json:"vcpu_count"`
 	MemoryMB    int    `json:"memory_mb"`
 	IPAddress   string `json:"ip_address"`
 }
@@ -134,12 +134,12 @@ type VM struct {
 type CreateVMRequest struct {
 	Name        string `json:"name"`
 	Description string `json:"description,omitempty"`
-	VCPUs       int    `json:"vcpus"`
+	VCPUCount   int    `json:"vcpu_count"`
 	MemoryMB    int    `json:"memory_mb"`
 }
 
 type ListVMsResponse struct {
-	VMs        []VM `json:"vms"`
+	Items      []VM `json:"items"`
 	Total      int  `json:"total"`
 	Page       int  `json:"page"`
 	PageSize   int  `json:"page_size"`
