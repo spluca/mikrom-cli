@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/spluca/mikrom-cli/internal/api"
 	"github.com/spluca/mikrom-cli/internal/config"
@@ -567,5 +568,282 @@ func TestVMDeployCmd_APIError(t *testing.T) {
 	err := vmDeployCmd.RunE(vmDeployCmd, nil)
 	if err == nil {
 		t.Error("expected error, got nil")
+	}
+}
+
+// --- health ---
+
+func TestHealthCmd_Success(t *testing.T) {
+	srv := jsonServer(t, http.StatusOK, api.HealthResponse{Status: "ok"})
+	defer srv.Close()
+	setupCfg(srv.URL, "")
+
+	out := captureOutput(func() {
+		if err := healthCmd.RunE(healthCmd, nil); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
+	if !strings.Contains(out, "ok") {
+		t.Errorf("expected 'ok' in output, got: %s", out)
+	}
+	if !strings.Contains(out, srv.URL) {
+		t.Errorf("expected API URL in output, got: %s", out)
+	}
+}
+
+func TestHealthCmd_Error(t *testing.T) {
+	srv := jsonServer(t, http.StatusServiceUnavailable, map[string]any{"error": "down"})
+	defer srv.Close()
+	setupCfg(srv.URL, "")
+
+	err := healthCmd.RunE(healthCmd, nil)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+// --- context ---
+
+// setHomeForTest redirects HOME to a temp dir for the duration of the test.
+func setHomeForTest(t *testing.T) {
+	t.Helper()
+	tmp := t.TempDir()
+	original := os.Getenv("HOME")
+	os.Setenv("HOME", tmp)
+	t.Cleanup(func() { os.Setenv("HOME", original) })
+}
+
+func TestContextListCmd_NoContexts(t *testing.T) {
+	setupCfg("http://localhost:8080", "tok")
+
+	out := captureOutput(func() {
+		if err := contextListCmd.RunE(contextListCmd, nil); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
+	if !strings.Contains(out, "default") {
+		t.Errorf("expected 'default' context in output, got: %s", out)
+	}
+}
+
+func TestContextListCmd_WithContexts(t *testing.T) {
+	cfg = &config.Config{
+		CurrentContext: "prod",
+		APIURL:         "http://prod:8080",
+		Token:          "prod-tok",
+		Contexts: map[string]config.ContextEntry{
+			"prod": {APIURL: "http://prod:8080", Token: "prod-tok"},
+			"dev":  {APIURL: "http://dev:8080", Token: "dev-tok"},
+		},
+	}
+
+	out := captureOutput(func() {
+		if err := contextListCmd.RunE(contextListCmd, nil); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
+	if !strings.Contains(out, "prod") || !strings.Contains(out, "dev") {
+		t.Errorf("expected both contexts in output, got: %s", out)
+	}
+}
+
+func TestContextShowCmd(t *testing.T) {
+	cfg = &config.Config{
+		CurrentContext: "staging",
+		APIURL:         "http://staging:8080",
+		Token:          "stg-tok",
+	}
+
+	out := captureOutput(func() {
+		if err := contextShowCmd.RunE(contextShowCmd, nil); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
+	if !strings.Contains(out, "staging") {
+		t.Errorf("expected 'staging' in output, got: %s", out)
+	}
+	if !strings.Contains(out, "http://staging:8080") {
+		t.Errorf("expected API URL in output, got: %s", out)
+	}
+}
+
+func TestContextShowCmd_NoAuth(t *testing.T) {
+	cfg = &config.Config{APIURL: "http://localhost:8080", Token: ""}
+
+	out := captureOutput(func() {
+		if err := contextShowCmd.RunE(contextShowCmd, nil); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
+	if !strings.Contains(out, "no") {
+		t.Errorf("expected 'no' auth in output, got: %s", out)
+	}
+}
+
+func TestContextAddCmd_Success(t *testing.T) {
+	setHomeForTest(t)
+	cfg = &config.Config{APIURL: "http://localhost:8080"}
+
+	contextAddCmd.Flags().Set("api-url", "http://prod:9090") //nolint:errcheck
+	contextAddCmd.Flags().Set("token", "prod-tok")           //nolint:errcheck
+
+	out := captureOutput(func() {
+		if err := contextAddCmd.RunE(contextAddCmd, []string{"prod"}); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
+	if !strings.Contains(out, "prod") {
+		t.Errorf("expected 'prod' in output, got: %s", out)
+	}
+	if _, ok := cfg.Contexts["prod"]; !ok {
+		t.Error("expected 'prod' context to be added")
+	}
+}
+
+func TestContextUseCmd_Success(t *testing.T) {
+	setHomeForTest(t)
+	cfg = &config.Config{
+		CurrentContext: "dev",
+		APIURL:         "http://dev:8080",
+		Token:          "dev-tok",
+		Contexts: map[string]config.ContextEntry{
+			"dev":  {APIURL: "http://dev:8080", Token: "dev-tok"},
+			"prod": {APIURL: "http://prod:8080", Token: "prod-tok"},
+		},
+	}
+
+	out := captureOutput(func() {
+		if err := contextUseCmd.RunE(contextUseCmd, []string{"prod"}); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
+	if !strings.Contains(out, "prod") {
+		t.Errorf("expected 'prod' in output, got: %s", out)
+	}
+	if cfg.CurrentContext != "prod" {
+		t.Errorf("expected current context to be 'prod', got %q", cfg.CurrentContext)
+	}
+}
+
+func TestContextUseCmd_NotFound(t *testing.T) {
+	setHomeForTest(t)
+	cfg = &config.Config{
+		Contexts: map[string]config.ContextEntry{
+			"dev": {APIURL: "http://dev:8080", Token: "tok"},
+		},
+	}
+
+	err := contextUseCmd.RunE(contextUseCmd, []string{"missing"})
+	if err == nil {
+		t.Error("expected error for missing context, got nil")
+	}
+}
+
+func TestContextRemoveCmd_Success(t *testing.T) {
+	setHomeForTest(t)
+	cfg = &config.Config{
+		CurrentContext: "dev",
+		Contexts: map[string]config.ContextEntry{
+			"dev":  {APIURL: "http://dev:8080", Token: "tok"},
+			"prod": {APIURL: "http://prod:8080", Token: "tok2"},
+		},
+	}
+
+	out := captureOutput(func() {
+		if err := contextRemoveCmd.RunE(contextRemoveCmd, []string{"prod"}); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
+	if !strings.Contains(out, "prod") {
+		t.Errorf("expected 'prod' in output, got: %s", out)
+	}
+	if _, ok := cfg.Contexts["prod"]; ok {
+		t.Error("expected 'prod' context to be removed")
+	}
+}
+
+func TestContextRemoveCmd_ActiveError(t *testing.T) {
+	setHomeForTest(t)
+	cfg = &config.Config{
+		CurrentContext: "prod",
+		Contexts: map[string]config.ContextEntry{
+			"prod": {APIURL: "http://prod:8080", Token: "tok"},
+		},
+	}
+
+	err := contextRemoveCmd.RunE(contextRemoveCmd, []string{"prod"})
+	if err == nil {
+		t.Error("expected error when removing active context, got nil")
+	}
+}
+
+// --- waitForVM / waitForVMDeleted ---
+
+func TestWaitForVM_Timeout(t *testing.T) {
+	srv := jsonServer(t, http.StatusOK, api.VM{ID: "vm1", Status: "starting"})
+	defer srv.Close()
+	c := api.NewClient(srv.URL, "tok")
+
+	// timeout=0 → loop condition false immediately, no sleep
+	_, err := waitForVM(c, "vm1", "running", 0)
+	if err == nil {
+		t.Fatal("expected timeout error, got nil")
+	}
+	if !strings.Contains(err.Error(), "timed out") {
+		t.Errorf("expected 'timed out' in error, got: %v", err)
+	}
+}
+
+func TestWaitForVM_ErrorState(t *testing.T) {
+	srv := jsonServer(t, http.StatusOK, api.VM{ID: "vm1", Status: "error"})
+	defer srv.Close()
+	c := api.NewClient(srv.URL, "tok")
+
+	// Use a generous timeout so the loop runs at least once (needs 1 poll).
+	_, err := waitForVM(c, "vm1", "running", 10*time.Second)
+	if err == nil {
+		t.Fatal("expected error for VM in error state, got nil")
+	}
+	if !strings.Contains(err.Error(), "error state") {
+		t.Errorf("expected 'error state' in error, got: %v", err)
+	}
+}
+
+func TestWaitForVM_Success(t *testing.T) {
+	srv := jsonServer(t, http.StatusOK, api.VM{ID: "vm1", Status: "running"})
+	defer srv.Close()
+	c := api.NewClient(srv.URL, "tok")
+
+	vm, err := waitForVM(c, "vm1", "running", 10*time.Second)
+	if err != nil {
+		t.Fatalf("waitForVM() error: %v", err)
+	}
+	if vm.Status != "running" {
+		t.Errorf("Status: got %q, want running", vm.Status)
+	}
+}
+
+func TestWaitForVMDeleted_Timeout(t *testing.T) {
+	srv := jsonServer(t, http.StatusOK, api.VM{ID: "vm1", Status: "deleting"})
+	defer srv.Close()
+	c := api.NewClient(srv.URL, "tok")
+
+	err := waitForVMDeleted(c, "vm1", 0)
+	if err == nil {
+		t.Fatal("expected timeout error, got nil")
+	}
+	if !strings.Contains(err.Error(), "timed out") {
+		t.Errorf("expected 'timed out' in error, got: %v", err)
+	}
+}
+
+func TestWaitForVMDeleted_Success(t *testing.T) {
+	srv := jsonServer(t, http.StatusNotFound, map[string]any{"error": "not found"})
+	defer srv.Close()
+	c := api.NewClient(srv.URL, "tok")
+
+	err := waitForVMDeleted(c, "vm1", 10*time.Second)
+	if err != nil {
+		t.Fatalf("waitForVMDeleted() error: %v", err)
 	}
 }

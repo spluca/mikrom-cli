@@ -707,3 +707,284 @@ func TestDeployVM_Error(t *testing.T) {
 		t.Fatal("expected error, got nil")
 	}
 }
+
+// --- do: network error ---
+
+func TestDo_NetworkError(t *testing.T) {
+	// Use a port where nothing is listening to trigger a connection error.
+	c := NewClient("http://127.0.0.1:1", "tok")
+	_, err := c.do(http.MethodGet, "/", nil)
+	if err == nil {
+		t.Fatal("expected network error, got nil")
+	}
+}
+
+func TestLogin_NetworkError(t *testing.T) {
+	c := NewClient("http://127.0.0.1:1", "")
+	_, err := c.Login("a@b.com", "pass")
+	if err == nil {
+		t.Fatal("expected network error, got nil")
+	}
+}
+
+func TestRegister_NetworkError(t *testing.T) {
+	c := NewClient("http://127.0.0.1:1", "")
+	_, err := c.Register("a@b.com", "pass", "Name")
+	if err == nil {
+		t.Fatal("expected network error, got nil")
+	}
+}
+
+func TestProfile_NetworkError(t *testing.T) {
+	c := NewClient("http://127.0.0.1:1", "tok")
+	_, err := c.Profile()
+	if err == nil {
+		t.Fatal("expected network error, got nil")
+	}
+}
+
+func TestHealth_NetworkError(t *testing.T) {
+	c := NewClient("http://127.0.0.1:1", "")
+	_, err := c.Health()
+	if err == nil {
+		t.Fatal("expected network error, got nil")
+	}
+}
+
+func TestListVMs_NetworkError(t *testing.T) {
+	c := NewClient("http://127.0.0.1:1", "tok")
+	_, err := c.ListVMs(1, 10, "")
+	if err == nil {
+		t.Fatal("expected network error, got nil")
+	}
+}
+
+func TestGetVM_NetworkError(t *testing.T) {
+	c := NewClient("http://127.0.0.1:1", "tok")
+	_, err := c.GetVM("vm1")
+	if err == nil {
+		t.Fatal("expected network error, got nil")
+	}
+}
+
+func TestCreateVM_NetworkError(t *testing.T) {
+	c := NewClient("http://127.0.0.1:1", "tok")
+	_, err := c.CreateVM(CreateVMRequest{Name: "x", VCPUCount: 1, MemoryMB: 256})
+	if err == nil {
+		t.Fatal("expected network error, got nil")
+	}
+}
+
+func TestUpdateVM_NetworkError(t *testing.T) {
+	name := "x"
+	c := NewClient("http://127.0.0.1:1", "tok")
+	_, err := c.UpdateVM("vm1", UpdateVMRequest{Name: &name})
+	if err == nil {
+		t.Fatal("expected network error, got nil")
+	}
+}
+
+func TestDeleteVM_NetworkError(t *testing.T) {
+	c := NewClient("http://127.0.0.1:1", "tok")
+	if err := c.DeleteVM("vm1"); err == nil {
+		t.Fatal("expected network error, got nil")
+	}
+}
+
+func TestStartVM_NetworkError(t *testing.T) {
+	c := NewClient("http://127.0.0.1:1", "tok")
+	if err := c.StartVM("vm1"); err == nil {
+		t.Fatal("expected network error, got nil")
+	}
+}
+
+func TestStopVM_NetworkError(t *testing.T) {
+	c := NewClient("http://127.0.0.1:1", "tok")
+	if err := c.StopVM("vm1"); err == nil {
+		t.Fatal("expected network error, got nil")
+	}
+}
+
+func TestRestartVM_NetworkError(t *testing.T) {
+	c := NewClient("http://127.0.0.1:1", "tok")
+	if err := c.RestartVM("vm1"); err == nil {
+		t.Fatal("expected network error, got nil")
+	}
+}
+
+func TestDeployVM_NetworkError(t *testing.T) {
+	c := NewClient("http://127.0.0.1:1", "tok")
+	_, err := c.DeployVM(DeployVMRequest{Name: "app", RepoURL: "https://github.com/x/y"})
+	if err == nil {
+		t.Fatal("expected network error, got nil")
+	}
+}
+
+func TestListIPPools_NetworkError(t *testing.T) {
+	c := NewClient("http://127.0.0.1:1", "tok")
+	_, err := c.ListIPPools(1, 10)
+	if err == nil {
+		t.Fatal("expected network error, got nil")
+	}
+}
+
+func TestGetIPPool_NetworkError(t *testing.T) {
+	c := NewClient("http://127.0.0.1:1", "tok")
+	_, err := c.GetIPPool(1)
+	if err == nil {
+		t.Fatal("expected network error, got nil")
+	}
+}
+
+func TestCreateIPPool_NetworkError(t *testing.T) {
+	c := NewClient("http://127.0.0.1:1", "tok")
+	_, err := c.CreateIPPool(CreateIPPoolRequest{Name: "x", CIDR: "10.0.0.0/24"})
+	if err == nil {
+		t.Fatal("expected network error, got nil")
+	}
+}
+
+func TestUpdateIPPool_NetworkError(t *testing.T) {
+	name := "x"
+	c := NewClient("http://127.0.0.1:1", "tok")
+	_, err := c.UpdateIPPool(1, UpdateIPPoolRequest{Name: &name})
+	if err == nil {
+		t.Fatal("expected network error, got nil")
+	}
+}
+
+func TestDeleteIPPool_NetworkError(t *testing.T) {
+	c := NewClient("http://127.0.0.1:1", "tok")
+	if err := c.DeleteIPPool(1); err == nil {
+		t.Fatal("expected network error, got nil")
+	}
+}
+
+func TestGetIPPoolStats_NetworkError(t *testing.T) {
+	c := NewClient("http://127.0.0.1:1", "tok")
+	_, err := c.GetIPPoolStats(1)
+	if err == nil {
+		t.Fatal("expected network error, got nil")
+	}
+}
+
+func TestGetAllPoolStats_NetworkError(t *testing.T) {
+	c := NewClient("http://127.0.0.1:1", "tok")
+	_, err := c.GetAllPoolStats()
+	if err == nil {
+		t.Fatal("expected network error, got nil")
+	}
+}
+
+func TestSuggestIPRange_NetworkError(t *testing.T) {
+	c := NewClient("http://127.0.0.1:1", "tok")
+	_, err := c.SuggestIPRange("10.0.0.0/24")
+	if err == nil {
+		t.Fatal("expected network error, got nil")
+	}
+}
+
+// --- Health ---
+
+func TestHealth_Success(t *testing.T) {
+	srv := newTestServer(t, http.StatusOK, HealthResponse{Status: "ok"})
+	defer srv.Close()
+
+	c := NewClient(srv.URL, "")
+	got, err := c.Health()
+	if err != nil {
+		t.Fatalf("Health() error: %v", err)
+	}
+	if got.Status != "ok" {
+		t.Errorf("Status: got %q, want ok", got.Status)
+	}
+}
+
+func TestHealth_Error(t *testing.T) {
+	srv := newTestServer(t, http.StatusServiceUnavailable, map[string]any{"error": "service unavailable"})
+	defer srv.Close()
+
+	c := NewClient(srv.URL, "")
+	_, err := c.Health()
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestHealth_UsesCorrectPath(t *testing.T) {
+	var gotPath string
+	srv := newTestServerFunc(t, func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		json.NewEncoder(w).Encode(HealthResponse{Status: "ok"})
+	})
+	defer srv.Close()
+
+	c := NewClient(srv.URL, "")
+	c.Health()
+	if gotPath != "/health" {
+		t.Errorf("path: got %q, want /health", gotPath)
+	}
+}
+
+// --- ListVMs client-side status filter ---
+
+func TestListVMs_WithStatusFilter(t *testing.T) {
+	body := ListVMsResponse{
+		Items: []VM{
+			{ID: "vm1", Status: "running"},
+			{ID: "vm2", Status: "stopped"},
+			{ID: "vm3", Status: "running"},
+		},
+		Total: 3,
+	}
+	srv := newTestServer(t, http.StatusOK, body)
+	defer srv.Close()
+
+	c := NewClient(srv.URL, "tok")
+	got, err := c.ListVMs(1, 10, "running")
+	if err != nil {
+		t.Fatalf("ListVMs() error: %v", err)
+	}
+	if len(got.Items) != 2 {
+		t.Errorf("expected 2 running VMs, got %d", len(got.Items))
+	}
+	for _, vm := range got.Items {
+		if vm.Status != "running" {
+			t.Errorf("expected only running VMs, got status %q for %s", vm.Status, vm.ID)
+		}
+	}
+	if got.Total != 2 {
+		t.Errorf("Total: got %d, want 2", got.Total)
+	}
+}
+
+func TestListVMs_StatusFilter_NoMatch(t *testing.T) {
+	body := ListVMsResponse{
+		Items: []VM{{ID: "vm1", Status: "stopped"}},
+		Total: 1,
+	}
+	srv := newTestServer(t, http.StatusOK, body)
+	defer srv.Close()
+
+	c := NewClient(srv.URL, "tok")
+	got, err := c.ListVMs(1, 10, "running")
+	if err != nil {
+		t.Fatalf("ListVMs() error: %v", err)
+	}
+	if len(got.Items) != 0 {
+		t.Errorf("expected 0 items, got %d", len(got.Items))
+	}
+}
+
+// --- GetAllPoolStats error ---
+
+func TestGetAllPoolStats_Error(t *testing.T) {
+	srv := newTestServer(t, http.StatusInternalServerError, map[string]any{"error": "internal error"})
+	defer srv.Close()
+
+	c := NewClient(srv.URL, "tok")
+	_, err := c.GetAllPoolStats()
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
