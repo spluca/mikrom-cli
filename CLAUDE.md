@@ -37,4 +37,4 @@ internal/
 - REST API on port 8080, JWT-authenticated
 - Resources: Users, VMs (Firecracker microVMs), IP Pools
 - VM operations (create, start, stop, restart, delete) are async — they queue tasks via Redis/asynq and return immediately
-- VM states: `pending`, `provisioning`, `starting`, `running`, `stopping`, `stopped`, `restarting`, `error`, `deleting`
+- VM states: `pending`, `provisioning`, `building`, `starting`, `running`, `stopping`, `stopped`, `restarting`, `error`, `deleting`

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
@@ -117,9 +118,10 @@ var authProfileCmd = &cobra.Command{
 			return nil
 		}
 
-		fmt.Printf("ID:    %d\n", user.ID)
-		fmt.Printf("Name:  %s\n", user.Name)
-		fmt.Printf("Email: %s\n", user.Email)
+		fmt.Printf("ID:      %d\n", user.ID)
+		fmt.Printf("Name:    %s\n", user.Name)
+		fmt.Printf("Email:   %s\n", user.Email)
+		fmt.Printf("Created: %s\n", user.CreatedAt.Format(time.RFC3339))
 		return nil
 	},
 }

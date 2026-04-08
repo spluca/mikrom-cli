@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 type Client struct {
@@ -82,9 +83,11 @@ type RegisterRequest struct {
 }
 
 type User struct {
-	ID    int    `json:"id"`
-	Email string `json:"email"`
-	Name  string `json:"name"`
+	ID        int       `json:"id"`
+	Email     string    `json:"email"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type AuthResponse struct {
@@ -127,13 +130,18 @@ func (c *Client) Profile() (*User, error) {
 // VMs
 
 type VM struct {
-	ID          string `json:"vm_id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Status      string `json:"status"`
-	VCPUCount   int    `json:"vcpu_count"`
-	MemoryMB    int    `json:"memory_mb"`
-	IPAddress   string `json:"ip_address"`
+	ID           string    `json:"vm_id"`
+	Name         string    `json:"name"`
+	Description  string    `json:"description"`
+	Status       string    `json:"status"`
+	VCPUCount    int       `json:"vcpu_count"`
+	MemoryMB     int       `json:"memory_mb"`
+	IPAddress    string    `json:"ip_address"`
+	ErrorMessage string    `json:"error_message,omitempty"`
+	Host         string    `json:"host,omitempty"`
+	UserID       int       `json:"user_id"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 type CreateVMRequest struct {
@@ -143,6 +151,7 @@ type CreateVMRequest struct {
 	MemoryMB    int    `json:"memory_mb"`
 	KernelPath  string `json:"kernel_path,omitempty"`
 	RootfsPath  string `json:"rootfs_path,omitempty"`
+	ImageRef    string `json:"image_ref,omitempty"`
 }
 
 type UpdateVMRequest struct {

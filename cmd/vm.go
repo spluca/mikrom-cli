@@ -84,6 +84,7 @@ var vmCreateCmd = &cobra.Command{
 		memory, _ := cmd.Flags().GetInt("memory")
 		kernelPath, _ := cmd.Flags().GetString("kernel-path")
 		rootfsPath, _ := cmd.Flags().GetString("rootfs-path")
+		imageRef, _ := cmd.Flags().GetString("image-ref")
 		wait, _ := cmd.Flags().GetBool("wait")
 
 		vm, err := newClient().CreateVM(api.CreateVMRequest{
@@ -93,6 +94,7 @@ var vmCreateCmd = &cobra.Command{
 			MemoryMB:    memory,
 			KernelPath:  kernelPath,
 			RootfsPath:  rootfsPath,
+			ImageRef:    imageRef,
 		})
 		if err != nil {
 			return err
@@ -377,6 +379,13 @@ func printVM(vm *api.VM) {
 	fmt.Printf("vCPUs:       %d\n", vm.VCPUCount)
 	fmt.Printf("Memory:      %d MB\n", vm.MemoryMB)
 	fmt.Printf("IP Address:  %s\n", vm.IPAddress)
+	if vm.ErrorMessage != "" {
+		fmt.Printf("Error:       %s\n", vm.ErrorMessage)
+	}
+	if vm.Host != "" {
+		fmt.Printf("Host:        %s\n", vm.Host)
+	}
+	fmt.Printf("Created:     %s\n", vm.CreatedAt.Format(time.RFC3339))
 }
 
 func init() {
@@ -389,7 +398,8 @@ func init() {
 	vmCreateCmd.Flags().Int("vcpus", 1, "Number of vCPUs (1-32)")
 	vmCreateCmd.Flags().Int("memory", 512, "Memory in MB (128-32768)")
 	vmCreateCmd.Flags().String("kernel-path", "", "Path to kernel on the agent host (optional)")
-	vmCreateCmd.Flags().String("rootfs-path", "", "Path to rootfs on the agent host (optional)")
+	vmCreateCmd.Flags().String("rootfs-path", "", "Path to rootfs image on the agent host (optional)")
+	vmCreateCmd.Flags().String("image-ref", "", "Container image reference to use as rootfs (optional)")
 	vmCreateCmd.Flags().Bool("wait", false, "Wait until the VM is running")
 	vmCreateCmd.MarkFlagRequired("name")
 
