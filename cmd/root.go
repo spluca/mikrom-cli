@@ -36,7 +36,6 @@ func init() {
 
 	rootCmd.AddCommand(authCmd)
 	rootCmd.AddCommand(vmCmd)
-	rootCmd.AddCommand(ippoolCmd)
 	rootCmd.AddCommand(contextCmd)
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(healthCmd)
